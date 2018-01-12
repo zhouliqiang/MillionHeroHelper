@@ -10,11 +10,11 @@ Linux用户下载/binary/linux/main使用，macOS用户下载/binary/mac/main使
 
 程序在Linux上的运行情况：
 
-![linux_result](http://omohqogal.bkt.clouddn.com/linux_result.png)
+![linux](http://omohqogal.bkt.clouddn.com/linux_result.png)
 
 程序在macOS上的运行情况：
 
-![mac_result](http://omohqogal.bkt.clouddn.com/mac_result.png)
+![mac](http://omohqogal.bkt.clouddn.com/mac_result.png)
 
 
 ### 使用说明
@@ -121,4 +121,3 @@ macOS安装tesseract-ocr方式有两种：
 #### Windows
 
 由于tesseract-ocr依赖问题还没解决暂不支持。
-
