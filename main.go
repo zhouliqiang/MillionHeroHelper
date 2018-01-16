@@ -25,57 +25,47 @@ const (
 
 var wg sync.WaitGroup
 var results = make(map[int]string, 4)
+var startTime time.Time
 
 func main() {
-	fmt.Println("\nstart time: ", time.Now())
+	startTime = time.Now()
 	var cmd *exec.Cmd
 	if runtime.GOOS == MacOS {
 		cmd = exec.Command("/bin/sh", "-c", "adb shell screencap -p /sdcard/screen.png")
 	} else if runtime.GOOS == Linux {
 		cmd = exec.Command("/bin/sh", "-c", "adb shell screencap -p | sed 's/\r$//' > screen.png")
 	}
-	if err := cmd.Run(); err != nil {
-		log.Printf("Error %v executing command!", err)
-		os.Exit(1)
-	}
+	err := cmd.Run()
+	handleError(err)
 
 	if runtime.GOOS == MacOS {
 		cmd = exec.Command("/bin/sh", "-c", "adb pull /sdcard/screen.png screen.png")
-		if err := cmd.Run(); err != nil {
-			log.Printf("Error %v executing command!", err)
-			os.Exit(1)
-		}
+		err := cmd.Run()
+		handleError(err)
 	}
 
 	originFile, err := os.Open("screen.png")
-	if err != nil {
-		log.Printf("Error %v open image file.", err)
-		os.Exit(1)
-	}
+	handleError(err)
+
 	defer originFile.Close()
 
 	origin, _, err := image.Decode(originFile)
-	if err != nil {
-		log.Printf("Error %v decode image file.", err)
-		os.Exit(1)
-	}
+	handleError(err)
 
-	for i :=0; i < 4; i++ {
+	for i := 0; i < 4; i++ {
 		wg.Add(1)
 		ocrTask(origin, i)
 	}
 
 	wg.Wait()
 
+	filterResults()
+
 	quiz := results[0]
-	quiz = pickQuiz(quiz)
 	fmt.Println("quiz:", color.GreenString(quiz))
 
 	doc, err := goquery.NewDocument("http://www.baidu.com/s?wd="+quiz)
-	if err != nil {
-		log.Printf("Error %v while HTTP reqeust.", err)
-		panic(err)
-	}
+	handleError(err)
 
 	doc.Find("div.result").Each(func(i int, s *goquery.Selection) {
 		content := s.Find("div.c-abstract").Text()
@@ -93,7 +83,7 @@ func main() {
 		fmt.Println(content)
 	})
 
-	fmt.Println("end time: ", time.Now())
+	fmt.Println("cost time: ", time.Since(startTime))
 	os.Exit(0)
 }
 
@@ -118,35 +108,43 @@ func ocrTask(origin image.Image, index int) {
 			})
 		}
 
-		if err != nil {
-			log.Printf("Error %v crop %d image file", err, index)
-			os.Exit(1)
-		}
+		handleError(err)
 
 		croppedFile, err := os.Create(strconv.Itoa(index) + ".png")
-		if err != nil {
-			log.Printf("Error %v create cropped %d image file", err, index)
-			os.Exit(1)
-		}
+		handleError(err)
 
 		err = png.Encode(croppedFile, croppedImg)
-		if err != nil {
-			log.Printf("Error %v encode cropped %d image file", err, index)
-			os.Exit(1)
-		}
+		handleError(err)
 		croppedFile.Close()
 
 		client := gosseract.NewClient()
 		defer client.Close()
 		client.SetImage(strconv.Itoa(index) + ".png")
 		client.SetLanguage("chi_sim")
-		text, _ := client.Text()
+		text, err := client.Text()
+		handleError(err)
 		results[index] = text
 	}()
 }
 
-func pickQuiz(str string) string {
-	rs := []rune(str)
-	length := len(rs)
-	return strings.Replace(strings.Replace(string(rs[3:length]), " ", "", -1), "\n", "", -1)
+func filterResults() {
+	for k, v := range results {
+		switch k {
+		case 0:
+			rs := []rune(v)
+			length := len(rs)
+			results[k] = strings.Replace(strings.Replace(string(rs[3:length]), " ", "", -1), "\n", "", -1)
+			break
+		default:
+			results[k] = strings.Replace(v, " ", "", -1)
+			break
+		}
+	}
+}
+
+func handleError(err error) {
+	if err != nil {
+		log.Printf("Error %v .", err)
+		os.Exit(1)
+	}
 }
