@@ -6,15 +6,15 @@ Linux用户下载/binary/linux/main使用，macOS用户下载/binary/mac/main使
 
 题目：
 
-![quiz](http://omohqogal.bkt.clouddn.com/quiz.png)
+![quiz](./images/quiz.png)
 
 程序在Linux上的运行情况：
 
-![linux](http://omohqogal.bkt.clouddn.com/linux_result.png)
+![linux](./images/linux_result.png)
 
 程序在macOS上的运行情况：
 
-![mac](http://omohqogal.bkt.clouddn.com/mac_result.png)
+![mac](./images/mac_result.png)
 
 
 ### 使用说明
@@ -73,7 +73,7 @@ Ubuntu Linux
 可以在命令行中执行
 
     echo $PATH
-    
+
 检查一下Golang和Android ADB Tools是否都添加PATH中了。
 
 当题目出现时及时在终端中执行
